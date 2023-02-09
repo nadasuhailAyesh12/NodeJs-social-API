@@ -1,7 +1,7 @@
-const express = require("express");
+const dbConnect = require('./db/dbConnection')
+const app = require('./app')
+const PORT = require("./config/enviroment/constants").port
 
-const app = express();
-
-const PORT = process.env.PORT || 5000;
+dbConnect();
 
 app.listen(PORT, console.log(`Server is running ${PORT}`));
