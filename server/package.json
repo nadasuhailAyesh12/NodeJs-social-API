@@ -10,6 +10,7 @@
     "array-flatten": "^1.1.1",
     "balanced-match": "^1.0.2",
     "base64-js": "^1.5.1",
+    "bcryptjs": "^2.4.3",
     "binary-extensions": "^2.2.0",
     "body-parser": "^1.20.1",
     "bowser": "^2.11.0",
@@ -34,6 +35,7 @@
     "escape-html": "^1.0.3",
     "etag": "^1.8.1",
     "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
     "fast-xml-parser": "^4.0.11",
     "fill-range": "^7.0.1",
     "finalhandler": "^1.2.0",
@@ -56,6 +58,7 @@
     "is-extglob": "^2.1.1",
     "is-glob": "^4.0.3",
     "is-number": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
     "kareem": "^2.5.1",
     "media-typer": "^0.3.0",
     "memory-pager": "^1.5.0",
@@ -115,7 +118,8 @@
     "uuid": "^8.3.2",
     "vary": "^1.1.2",
     "webidl-conversions": "^7.0.0",
-    "whatwg-url": "^11.0.0"
+    "whatwg-url": "^11.0.0",
+    "yup": "^0.32.11"
   },
   "scripts": {
     "start": "node server.js",
