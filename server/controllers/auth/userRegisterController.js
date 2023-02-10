@@ -2,11 +2,13 @@ const expressAsyncHandler = require('express-async-handler');
 
 const User = require('../../models/user/User')
 const generateToken = require('../../utils/generateToken');
+const hashPassword = require('../../utils/hashPassword');
 
 const register = expressAsyncHandler(
     async (req, res) => {
         try {
             const { firstName, lastName, email, password } = req.body
+            const hashedPassword = await hashPassword(password)
 
             const userExists = await User.findOne({ email })
 
@@ -18,8 +20,9 @@ const register = expressAsyncHandler(
                 firstName,
                 lastName,
                 email,
-                password
+                password: hashedPassword
             })
+
 
             const userId = user._id
             const token = generateToken(userId)
@@ -28,7 +31,10 @@ const register = expressAsyncHandler(
         }
 
         catch (error) {
-            throw new Error(error)
+            res.json({
+                message: error.message,
+                status: res.statusCode
+            })
         }
 
     })

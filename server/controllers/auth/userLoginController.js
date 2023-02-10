@@ -22,7 +22,10 @@ const login = expressAsyncHandler(
         }
 
         catch (error) {
-            throw new Error(error)
+            res.json({
+                message: error.message,
+                status: res.statusCode
+            })
         }
 
     })

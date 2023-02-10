@@ -1,8 +1,6 @@
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
-const hashPassword = require("../../middlewars/auth/hashPassword");
-
 const userSchema = new mongoose.Schema(
     {
         firstName: {
@@ -102,7 +100,7 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-userSchema.pre("save", hashPassword);
+
 
 
 const User = mongoose.model("User", userSchema);

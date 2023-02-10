@@ -6,9 +6,9 @@ const { registerValidationSchema } = require('../../validation/userValidation')
 const { loginValidationSchema } = require('../../validation/userValidation')
 const validator = require('../../middlewars/validation/validator')
 
-const userRoute = express.Router()
+const authRoute = express.Router()
 
-userRoute.post('/register', validator(registerValidationSchema), register)
-userRoute.post('/login', validator(loginValidationSchema), login)
+authRoute.post('/register', validator(registerValidationSchema), register)
+authRoute.post('/login', validator(loginValidationSchema), login)
 
-module.exports = userRoute
+module.exports = authRoute
