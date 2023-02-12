@@ -11,7 +11,6 @@ const registerValidationSchema = yup.object().shape({
         .max(64)
 })
 
-
 const loginValidationSchema = yup.object().shape({
     email: yup.string().email().required(),
     password: yup
@@ -21,4 +20,13 @@ const loginValidationSchema = yup.object().shape({
         .max(64)
 
 })
-module.exports = { loginValidationSchema, registerValidationSchema }
+
+const passwordValidationSchema = yup.object().shape({
+    password: yup
+        .string()
+        .min(8)
+        .max(64)
+
+})
+
+module.exports = { loginValidationSchema, registerValidationSchema, passwordValidationSchema }

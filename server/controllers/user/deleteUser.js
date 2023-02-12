@@ -8,7 +8,7 @@ const deleteUser = expressAsyncHandler(
         const { id } = req.params
         try {
             validateID(id)
-            const isExistuser = await User.findById(req?.user?.id)
+            const isExistuser = await User.findById(id)
 
             if (!isExistuser) {
                 throw new Error("user not found")
