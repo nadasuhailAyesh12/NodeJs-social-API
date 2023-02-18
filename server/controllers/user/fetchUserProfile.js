@@ -16,7 +16,7 @@ const userProfile = expressAsyncHandler(
                 throw new Error("user not found")
             }
 
-            const userProfile = await User.findById(id)
+            const userProfile = await User.findById(id).populate('posts')
             res.status(200).json({ message: 'success', userProfile });
         }
 
