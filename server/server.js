@@ -1,6 +1,6 @@
 const dbConnect = require('./db/dbConnection')
 const app = require('./app')
-const PORT = require("./config/enviroment/constants").port
+const PORT = require("./config/enviroment").port
 
 dbConnect();
 

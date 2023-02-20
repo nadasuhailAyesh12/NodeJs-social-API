@@ -1,11 +1,12 @@
 const express = require('express');
-
-const authRoute = require('./auth/AuthRoute')
-const usersRoute = require('./user/userRoute')
 const route = express.Router();
 
+const authRoute = require('./auth/AuthRoute');
+const postRouter = require('./post/postRoute');
+const usersRoute = require('./user/userRoute')
 
 route.use('/auth', authRoute);
 route.use("/users", usersRoute)
+route.use("/posts", postRouter)
 
 module.exports = route;
