@@ -5,6 +5,7 @@ const fetchAllPosts = expressAsyncHandler(
     async (req, res) => {
         try {
             const posts = await Post.find({}).populate('user');
+
             res.json({
                 message: "sucess",
                 posts
@@ -18,4 +19,5 @@ const fetchAllPosts = expressAsyncHandler(
         }
 
     })
+
 module.exports = fetchAllPosts 

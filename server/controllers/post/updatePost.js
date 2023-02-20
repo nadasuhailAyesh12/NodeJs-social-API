@@ -3,21 +3,22 @@ const expressAsyncHandler = require("express-async-handler");
 const Post = require("../../models/post/Post");
 const validateID = require("../../utils/ValidateMongoID");
 
-const fetchPost = expressAsyncHandler(async (req, res) => {
+const updatePost = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     try {
         validateID(id);
+
         const isExistPost = await Post.findById(id)
 
         if (!isExistPost) {
             throw new Error("post not found")
         }
 
-        const post = await Post.findById(id).populate("user");
-        await Post.findByIdAndUpdate(
+        const post = await Post.findByIdAndUpdate(
             id,
             {
-                $inc: { numOfViews: 1 },
+                ...req.body,
+                user: req.user
             },
             { new: true }
         );
@@ -30,4 +31,4 @@ const fetchPost = expressAsyncHandler(async (req, res) => {
     }
 });
 
-module.exports = fetchPost;
+module.exports = updatePost;

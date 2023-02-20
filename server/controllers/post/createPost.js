@@ -25,7 +25,7 @@ const createPost = expressAsyncHandler(async (req, res) => {
 
         else {
             const post = await Post.create(req.body);
-            const user = await User.findByIdAndUpdate(
+            await User.findByIdAndUpdate(
                 id,
                 {
                     $inc: { postCount: 1 },
@@ -35,8 +35,7 @@ const createPost = expressAsyncHandler(async (req, res) => {
 
             res.status(201).json({
                 message: "success",
-                user,
-                post,
+                post
             });
         }
     }
