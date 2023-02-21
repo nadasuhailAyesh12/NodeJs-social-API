@@ -4,17 +4,16 @@ const postSchema = new mongoose.Schema(
     {
         title: {
             type: String,
-            required: [true, "Post title is required"],
+            // required: [true, "Post title is required"],
             trim: true,
         },
         description: {
             type: String,
-            required: [true, "Post description is required"],
+            // required: [true, "Post description is required"],
         },
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: "Please Author is required",
         },
         isLiked: {
             type: Boolean,
