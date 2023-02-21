@@ -13,7 +13,7 @@ const fetchPost = expressAsyncHandler(async (req, res) => {
             throw new Error("post not found")
         }
 
-        const post = await Post.findById(id).populate("user");
+        const post = await Post.findById(id).populate("user").populate("dislikes").populate("likes");
         await Post.findByIdAndUpdate(
             id,
             {
