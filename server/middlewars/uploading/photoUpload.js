@@ -13,6 +13,6 @@ const multerFilter = (req, file, cb) => {
         );
     }
 };
-const profilePhotoUpload = multer({ storage: multerStorage, fileFilter: multerFilter, limits: { fileSize: 1000000 } });
+const photoUpload = multer({ storage: multerStorage, fileFilter: multerFilter, limits: { fileSize: 1000000 } });
 
-module.exports = { profilePhotoUpload }
+module.exports = photoUpload 

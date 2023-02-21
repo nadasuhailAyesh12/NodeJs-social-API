@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const expressAsyncHandler = require('express-async-handler');
 
 const User = require('../../models/user/User');
@@ -24,7 +26,7 @@ const uploadProfilePhoto = expressAsyncHandler(
                     {
                         new: true,
                     })
-
+                fs.unlinkSync(localPath)
                 res.status(200).json({ message: "sucess", user });
             }
 
