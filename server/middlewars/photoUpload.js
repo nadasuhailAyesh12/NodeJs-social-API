@@ -1,6 +1,24 @@
 const path = require("path");
 
 const sharp = require("sharp");
+const multer = require("multer");
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith("image")) {
+        cb(null, true);
+    } else {
+        cb(
+            {
+                message: "unsupported  file format",
+            },
+            false
+        );
+    }
+};
+
+const photoUpload = multer({ storage: multerStorage, fileFilter: multerFilter, limits: { fileSize: 1000000 } });
 
 const profilePhotoResize = async (req, res, next) => {
     if (!req.file) next();
@@ -28,4 +46,6 @@ const postPhotoResize = async (req, res, next) => {
     next();
 };
 
-module.exports = { postPhotoResize, profilePhotoResize }
+module.exports = { photoUpload, postPhotoResize, profilePhotoResize }
+
+

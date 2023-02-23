@@ -1,8 +1,7 @@
 const express = require("express");
 
 const route = require("./routes")
-const errorHandler = require("./middlewars/error/errorHandler");
-const notFoundError = require("./middlewars/error/notFoundError");
+const { notFoundError, errorHandler } = require("./middlewars/errorHandler");
 
 const app = express();
 
