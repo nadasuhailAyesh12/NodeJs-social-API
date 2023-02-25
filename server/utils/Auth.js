@@ -25,5 +25,6 @@ const comparePassword = async (password, hashPassword) => {
     return await bcrypt.compare(password, hashPassword)
 }
 
-module.exports = { generateToken, hashPassword, comparePassword, validateID }
+const AuthUtil = { generateToken, hashPassword, comparePassword, validateID }
+module.exports = AuthUtil
 
