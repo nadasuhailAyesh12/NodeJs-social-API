@@ -23,7 +23,7 @@ const loginValidationSchema = yup.object().shape({
 
 const passwordValidationSchema = yup.object().shape({
     password: yup
-        .string()
+        .string().required("please write your updated password")
         .min(8)
         .max(64)
 

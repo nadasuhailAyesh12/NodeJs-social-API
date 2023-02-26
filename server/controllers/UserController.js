@@ -1,344 +1,211 @@
-const fs = require('fs');
+const expressAsyncHandler = require("express-async-handler");
 
-const expressAsyncHandler = require('express-async-handler');
-const User = require('../models/User');
-const cloudinaryUploadImg = require('../utils/cloudinary');
+const UserService = require("../services/userService");
 
-const { comparePassword, hashPassword, validateID } = require("../utils/Auth");
+const fetchAllUsers = expressAsyncHandler(async (req, res) => {
+    try {
+        const users = await UserService.getUsers();
+        res.status(200).json({ message: "success", users });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-const fetchAllUsers = expressAsyncHandler(
-    async (req, res) => {
-        try {
-            const users = await User.find({});
-            res.status(200).json({ message: 'success', users })
+const fetchcustomUser = expressAsyncHandler(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await UserService.getUser(id);
+        res.status(200).json({ message: "success", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
+
+const fetchUserProfile = expressAsyncHandler(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const userProfile = await UserService.getUser(id);
+        res.status(200).json({ message: "success", userProfile });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
+
+const updateUserProfile = expressAsyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { firstName, lastName, email, bio, profilePhoto } = req?.body;
+    try {
+        if (
+            req?.user?.firstName === firstName &&
+            req?.user?.lastName === lastName &&
+            req?.user?.email === email &&
+            req?.user?.bio === bio &&
+            req?.user?.profilePhoto === profilePhoto
+        ) {
+            throw new Error(
+                "nothing changed please update one of the required fields"
+            );
         }
 
-        catch (err) {
-            res.json({ message: err.message })
-        }
-    })
+        const user = await UserService.updateUserProfile(id, {
+            firstName,
+            lastName,
+            email,
+            bio,
+            profilePhoto,
+        });
+        res.status(200).json({ message: "sucess", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-const fetchcustomUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        try {
-            validateID(id)
-            const isExistuser = await User.findById(id)
+const updateUserPassword = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params;
+        const newPassword = req?.body?.password;
+        let user = await UserService.getUser(id);
+        const userPassowrd = user.password;
+        user = await UserService.updatePassword(id, newPassword, userPassowrd);
+        res.status(200).json({ message: "sucess", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
+const deleteUser = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params;
+        await UserService.deleteUser(id);
+        res.sendStatus(204);
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-            const user = await User.findById(id)
-            res.status(200).json({ message: 'success', user });
-        }
+const followUser = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.body;
+        const { followedUser, loginUser } = await UserService.followUser(
+            req?.user?.id,
+            id
+        );
+        res.status(200).json({ message: "sucess", loginUser, followedUser });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-        catch (err) {
-            res.json({ message: err.message })
-        }
-    })
+const unfollowUser = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.body;
+        const { unfollowedUser, loginUser } = await UserService.unfollowUser(
+            req?.user?.id,
+            id
+        );
+        res.status(200).json({ message: "sucess", loginUser, unfollowedUser });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-const fetchUserProfile = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
+const blockUser = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await UserService.blockUser(id);
+        res.status(200).json({ message: "sucess", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-        try {
-            validateID(id)
-            const isExistuser = await User.findById(id)
+const unblockUser = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await UserService.unblockUser(id);
+        res.status(200).json({ message: "sucess", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
-
-            const userProfile = await User.findById(id).populate('posts')
-            res.status(200).json({ message: 'success', userProfile });
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const updateUserProfile = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        validateID(id)
-
-        try {
-            const isExistuser = await User.findById(id)
-
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
-
-            else if (req?.user?.firstName === req?.body?.firstName && req?.user?.lastName === req?.body?.lastName && req?.user?.email === req?.body?.email && req?.user?.bio === req?.body?.bio && req?.user?.profilePhoto === req?.body?.profilePhoto) {
-                throw new Error("nothing changed please update one of the required fields")
-            }
-
-            else {
-                const user = await User.findByIdAndUpdate(
-                    req.user.id,
-                    {
-                        firstName: req?.body?.firstName,
-                        lastName: req?.body?.lastName,
-                        email: req?.body?.email,
-                        bio: req?.body?.bio,
-                        profilePhoto: req?.body?.profilePhoto
-                    },
-                    {
-                        new: true,
-                        runValidators: true
-                    })
-
-                res.status(200).json({ message: "sucess", user });
-            }
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const updateUserPassword = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        validateID(id)
-        const password = req?.body?.password
-
-        try {
-            const user = await User.findById(id)
-
-            if (!user) {
-                throw new Error("user not found")
-            }
-
-            else if (password) {
-                if (await comparePassword(password, user.password)) {
-                    throw new Error("password doesn’t change")
-                }
-
-                user.password = await hashPassword(password)
-                const updatedUser = await user.save()
-
-                res.status(200).json({ message: "sucess", user: updatedUser });
-            }
-
-            else {
-                res.status(200).json({ message: "sucess", user });
-            }
+const uploadProfilePhoto = expressAsyncHandler(async (req, res) => {
+    try {
+        const { id } = req?.user;
+        if (!req.file) {
+            throw new Error(
+                "you don’t upload a profile photo yet ,please upload one"
+            );
         }
 
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
+        const localPath = `public/images/profile/${req?.file?.filename}`;
+        const user = await UserService.uploadProfilePhoto(id, localPath);
+        res.status(200).json({ message: "sucess", user });
+    }
+    catch (err) {
+        res.json({ message: err.message });
+    }
+});
 
-const deleteUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        try {
-            validateID(id)
-            const isExistuser = await User.findById(id)
+// const sendEmail = expressAsyncHandler(async (req, res) => {
+//     try {
+//         // let user = req.user
+//         // const token = await generateToken(user.id)
+//         // user = await User.findByIdAndUpdate(
+//         //     user.id,
+//         //     {
+//         //         accountVerificationToken: token,
 
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
+//         //     },
+//         //     {
+//         //         new: true,
+//         //     })
 
-            await User.findByIdAndDelete(id)
-            res.status(204).json({ message: "success" })
-        }
+//         const mailTransporter = nodemailer.createTransport({
+//             service: "gmail",
+//             host: 'smtp.gmail.com',
+//             port: 587,
+//             secure: false,
+//             auth: {
+//                 user,
+//                 pass
+//             }
+//         })
+//         const msg = {
+//             to: "nadaayesh10@gmail.com",
+//             from: user,
+//             subject: "test nodemailer",
+//             text: "Hey check me out for this email",
+//         };
 
-        catch (err) {
-            res.json({ message: err.message })
-        }
+//         await mailTransporter.sendMail(msg);
+//         res.json("emai sent");
+//     } catch (error) {
+//         console.log(error)
+//     }
+// });
 
-    })
-
-const followUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.body
-        validateID(id)
-
-        try {
-            const followedUser = await User.findById(id)
-
-            if (!followedUser) {
-                throw new Error(" the user that you are trying to follow is not found")
-            }
-
-            else if (followedUser.followers.includes(req?.user?.id)) {
-                throw new Error("you are already following this user")
-            }
-
-            else {
-                const followedUser = await User.findByIdAndUpdate(
-                    id,
-                    {
-                        $push: { followers: req?.user?.id }
-                    },
-                    {
-                        new: true,
-
-                    })
-
-                const loginUser = await User.findByIdAndUpdate(
-                    req?.user?.id,
-                    {
-                        $push: { following: id }
-                    },
-                    {
-                        new: true,
-
-                    })
-
-                res.status(200).json({ message: "sucess", loginUser, followedUser });
-            }
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const unfollowUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.body
-        validateID(id)
-
-        try {
-            const unfollowedUser = await User.findById(id)
-
-            if (!unfollowedUser) {
-                throw new Error(" the user that you are trying to unfollow is not found")
-            }
-
-            else {
-                const unfollowedUser = await User.findByIdAndUpdate(
-                    id,
-                    {
-                        $pull: { followers: req?.user?.id }
-                    },
-                    {
-                        new: true,
-
-                    })
-
-                const loginUser = await User.findByIdAndUpdate(
-                    req?.user?.id,
-                    {
-                        $pull: { following: id }
-                    },
-                    {
-                        new: true,
-
-                    })
-
-                res.status(200).json({ message: "sucess", loginUser, unfollowedUser });
-            }
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const blockUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        validateID(id)
-
-        try {
-            const isExistuser = await User.findById(id)
-
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
-
-            else {
-                const user = await User.findByIdAndUpdate(
-                    id,
-                    {
-                        isBlocked: true
-                    },
-                    {
-                        new: true,
-                    })
-
-                res.status(200).json({ message: "sucess", user });
-            }
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const unblockUser = expressAsyncHandler(
-    async (req, res) => {
-        const { id } = req.params
-        validateID(id)
-
-        try {
-            const isExistuser = await User.findById(id)
-
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
-
-            else {
-                const user = await User.findByIdAndUpdate(
-                    id,
-                    {
-                        isBlocked: false
-                    },
-                    {
-                        new: true,
-                    })
-
-                res.status(200).json({ message: "sucess", user });
-            }
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const uploadProfilePhoto = expressAsyncHandler(
-    async (req, res) => {
-        try {
-            const localPath = `public/images/profile/${req.file.filename}`
-            const image = await cloudinaryUploadImg(localPath)
-            const { id } = req.user
-            const isExistuser = await User.findById(id)
-
-            if (!isExistuser) {
-                throw new Error("user not found")
-            }
-
-            else {
-                const user = await User.findByIdAndUpdate(
-                    id,
-                    {
-                        profilePhoto: image?.url
-                    },
-                    {
-                        new: true,
-                    })
-                fs.unlinkSync(localPath)
-                res.status(200).json({ message: "sucess", user });
-            }
-
-        }
-
-        catch (err) {
-            res.json({ message: err.message });
-        }
-    })
-
-const userController = { fetchAllUsers, fetchcustomUser, fetchUserProfile, updateUserProfile, updateUserPassword, deleteUser, followUser, unfollowUser, blockUser, unblockUser, uploadProfilePhoto }
-module.exports = userController
-
-
-
-
+const userController = {
+    fetchAllUsers,
+    fetchcustomUser,
+    fetchUserProfile,
+    updateUserProfile,
+    updateUserPassword,
+    deleteUser,
+    followUser,
+    unfollowUser,
+    blockUser,
+    unblockUser,
+    uploadProfilePhoto
+};
+module.exports = userController;
