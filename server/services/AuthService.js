@@ -1,5 +1,6 @@
 
 const User = require("../models/User");
+const UserRepository = require("../repositories/userRepository");
 const userRepository = require("../repositories/userRepository");
 const AuthUtil = require("../utils/Auth");
 
@@ -10,7 +11,7 @@ const register = async ({ firstName, lastName, email, password }) => {
         throw new Error("User already exists");
     }
     const hashedPassword = await AuthUtil.hashPassword(password);
-    const user = await User.create({
+    const user = await UserRepository.createUser({
         firstName,
         lastName,
         email,

@@ -26,7 +26,7 @@ const fetchcustomUser = expressAsyncHandler(async (req, res) => {
 const fetchUserProfile = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     try {
-        const userProfile = await UserService.getUser(id);
+        const userProfile = await (await UserService.getUser(id)).populate("posts");
         res.status(200).json({ message: "success", userProfile });
     }
     catch (err) {

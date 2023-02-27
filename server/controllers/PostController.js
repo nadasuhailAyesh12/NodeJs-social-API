@@ -1,53 +1,32 @@
 const fs = require('fs');
 
 const expressAsyncHandler = require("express-async-handler");
-const Filter = require("bad-words");
 
 const Post = require("../models/Post");
-const User = require("../models/User");
 const { validateID } = require("../utils/Auth");
-const cloudinaryUploadImg = require('../utils/cloudinary');
+const PostService = require('../services/PostService');
 
 const createPost = expressAsyncHandler(async (req, res) => {
     try {
-        const { id } = req.user;
-        validateID(id);
-
-        const isProfane = new Filter().isProfane(
-            req.body.title,
-            req.body.description
-        );
-
-        if (isProfane) {
-            req.user.isBlocked = true;
-            await req.user.save();
-            throw new Error(
-                "creating faild because post containes profane words and you have been blocked"
-            );
-        }
+        const { id } = req.user
+        const { title, description, category } = req.body
         const localPath = `public/images/post/${req.file.filename}`
-        const image = await cloudinaryUploadImg(localPath)
 
-        const post = await Post.create({ ...req.body, user: id, image: image?.url });
-        await User.findByIdAndUpdate(
-            id,
-            {
-                $inc: { postCount: 1 },
-            },
-            { new: true }
-        );
+        const post = await PostService.createPost({
+            title, description, category
+        }, id, localPath)
 
         res.status(201).json({
             message: "success",
             post
-        });
-        fs.unlinkSync(localPath)
+        })
     }
 
     catch (error) {
         res.json({
             message: error.message,
         });
+        console.log(error)
     }
 });
 
