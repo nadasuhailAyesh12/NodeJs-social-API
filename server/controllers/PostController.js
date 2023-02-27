@@ -5,6 +5,7 @@ const expressAsyncHandler = require("express-async-handler");
 const Post = require("../models/Post");
 const { validateID } = require("../utils/Auth");
 const PostService = require('../services/PostService');
+const { Console } = require('console');
 
 const createPost = expressAsyncHandler(async (req, res) => {
     try {
@@ -26,14 +27,13 @@ const createPost = expressAsyncHandler(async (req, res) => {
         res.json({
             message: error.message,
         });
-        console.log(error)
     }
 });
 
 const fetchAllPosts = expressAsyncHandler(
     async (req, res) => {
         try {
-            const posts = await Post.find({}).populate('user');
+            const posts = await PostService.getPosts()
 
             res.json({
                 message: "sucess",
@@ -50,24 +50,9 @@ const fetchAllPosts = expressAsyncHandler(
     })
 
 const fetchCustomPost = expressAsyncHandler(async (req, res) => {
-    const { id } = req.params;
     try {
-        validateID(id);
-        const isExistPost = await Post.findById(id)
-
-        if (!isExistPost) {
-            throw new Error("post not found")
-        }
-
-        const post = await Post.findById(id).populate("user").populate("dislikes").populate("likes");
-        await Post.findByIdAndUpdate(
-            id,
-            {
-                $inc: { numOfViews: 1 },
-            },
-            { new: true }
-        );
-
+        const { id } = req.params;
+        const post = await (await PostService.getPost(id)).populate("user")
         res.status(200).json({ message: "success", post });
     }
 
@@ -77,29 +62,29 @@ const fetchCustomPost = expressAsyncHandler(async (req, res) => {
 });
 
 const updatePost = expressAsyncHandler(async (req, res) => {
-    const { id } = req.params;
+
     try {
-        validateID(id);
-        const isExistPost = await Post.findById(id)
+        const { id } = req.params;
+        const { title, description, category, image } = req.body
+        const isExistPost = await PostService.checkIfPost(id)
+        const postOwnerID = isExistPost.user
+        const loginUserID = req?.user?.id
+        await PostService.checkIfPostOwner(postOwnerID, loginUserID)
 
-        if (!isExistPost) {
-            throw new Error("post not found")
-        }
-
-        const post = await Post.findByIdAndUpdate(
+        const post = await PostService.updatePost(
             id,
             {
-                ...req.body,
-                user: req.user
-            },
-            { new: true }
-        );
-
+                title,
+                description,
+                category,
+                image
+            })
         res.status(200).json({ message: "success", post });
     }
 
     catch (err) {
         res.json({ message: err.message });
+
     }
 });
 

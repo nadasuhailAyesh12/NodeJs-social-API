@@ -6,7 +6,7 @@ const UserService = require('./userService');
 const cloudinaryUploadImg = require('../utils/cloudinary');
 const PostRepository = require('../repositories/postRepository');
 const UserRepository = require('../repositories/userRepository');
-
+const AuthUtil = require('../utils/Auth');
 
 const createPost = async ({ title, description, category }, id, localPath) => {
 
@@ -40,5 +40,43 @@ const createPost = async ({ title, description, category }, id, localPath) => {
     return post
 }
 
-const PostService = { createPost }
+const checkIfPost = async (id) => {
+    AuthUtil.validateID(id)
+    const isExistPost = await PostRepository.getPost(id)
+    if (!isExistPost) {
+        throw new Error('post not found')
+    }
+
+    return isExistPost
+}
+
+const getPost = async (id) => {
+    await checkIfPost(id)
+    const post = await PostRepository.updatePost(id, {
+        $inc: { numOfViews: 1 },
+    })
+    return post
+}
+
+const getPosts = async () => await PostRepository.getPosts()
+
+const checkIfPostOwner = async (UserOwnerID, loginUserID) => {
+    if (UserOwnerID.toString() !== (loginUserID.toString()))
+        throw new Error(" unauthorized to modify this post ")
+}
+const updatePost = async (
+    id,
+    { title, description, image, category }
+) => {
+    AuthUtil.validateID(id)
+    const post = await PostRepository.updatePost(id, {
+        title,
+        description,
+        image,
+        category,
+    })
+    return post
+}
+
+const PostService = { createPost, getPosts, getPost, checkIfPostOwner, checkIfPost, updatePost }
 module.exports = PostService
