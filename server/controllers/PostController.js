@@ -52,7 +52,7 @@ const fetchAllPosts = expressAsyncHandler(
 const fetchCustomPost = expressAsyncHandler(async (req, res) => {
     try {
         const { id } = req.params;
-        const post = await (await PostService.getPost(id)).populate("user")
+        const post = await (await (await (await PostService.getPost(id)).populate("user")).populate("likes")).populate("dislikes")
         res.status(200).json({ message: "success", post });
     }
 
@@ -90,17 +90,15 @@ const updatePost = expressAsyncHandler(async (req, res) => {
 
 const deletePost = expressAsyncHandler(
     async (req, res) => {
-        const { id } = req.params
         try {
-            validateID(id)
-            const isExistPost = await Post.findById(id)
+            const { id } = req.params
+            const isExistPost = await PostService.checkIfPost(id)
+            const postOwnerID = isExistPost.user
+            const loginUserID = req?.user?.id
+            await PostService.checkIfPostOwner(postOwnerID, loginUserID)
 
-            if (!isExistPost) {
-                throw new Error("post not found")
-            }
-
-            await Post.findByIdAndDelete(id)
-            res.status(204).json({ message: "success" })
+            await PostService.deletePost(postOwnerID, id)
+            res.sendStatus(204)
         }
 
         catch (err) {
@@ -109,51 +107,15 @@ const deletePost = expressAsyncHandler(
     })
 
 const likePost = expressAsyncHandler(async (req, res) => {
-    const { id } = req.body;
-    const userId = req.user.id;
-
     try {
-        let post = await Post.findById(id)
-        const alreadyDisliked = post?.dislikes?.includes(userId)
+        const { id } = req.body;
+        const userID = req.user.id;
+        const post = await PostService.checkIfPost(id)
+        const dislikes = post?.dislikes
         const isLiked = post?.isLiked
+        const likedPost = await PostService.likePost(id, dislikes, isLiked, userID)
 
-        if (alreadyDisliked) {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $pull: { dislikes: userId },
-                    isDisliked: false,
-
-
-                },
-
-                { new: true }
-            );
-        }
-
-        if (isLiked) {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $pull: { likes: userId },
-                    isLiked: false
-                },
-                { new: true }
-            );
-        }
-
-        else {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $push: { likes: userId },
-                    isLiked: true
-                },
-                { new: true }
-            );
-        }
-
-        res.status(200).json({ message: "success", post });
+        res.status(200).json({ message: "success", post: likedPost });
     }
 
     catch (err) {
@@ -162,54 +124,22 @@ const likePost = expressAsyncHandler(async (req, res) => {
 });
 
 const dislikePost = expressAsyncHandler(async (req, res) => {
-    const { id } = req.body;
-    const userId = req.user.id;
-
     try {
-        let post = await Post.findById(id)
-        const isDisliked = post?.isDisliked
-        const alreadyLiked = post?.likes?.includes(userId)
+        const { id } = req.body;
+        const userID = req.user.id;
+        const post = await PostService.checkIfPost(id)
+        const likes = post?.likes
+        const isDisLiked = post?.isDisliked
+        const dislikedPost = await PostService.dislikePost(id, likes, isDisLiked, userID)
 
-        if (alreadyLiked) {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $pull: { likes: userId },
-                    isLiked: false
-
-                },
-                { new: true }
-            );
-        }
-
-        if (isDisliked) {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $pull: { dislikes: userId },
-                    isDisliked: false
-                },
-                { new: true }
-            );
-        }
-
-        else {
-            post = await Post.findByIdAndUpdate(
-                id,
-                {
-                    $push: { dislikes: userId },
-                    isDisliked: true
-                },
-                { new: true }
-            );
-        }
-        res.status(200).json({ message: "success", post });
+        res.status(200).json({ message: "success", post: dislikedPost });
     }
 
     catch (err) {
         res.json({ message: err.message });
     }
 });
+
 
 const postController = { createPost, fetchCustomPost, fetchAllPosts, updatePost, deletePost, likePost, dislikePost }
 module.exports = postController

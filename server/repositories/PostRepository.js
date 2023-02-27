@@ -10,5 +10,7 @@ const updatePost = async (id, options) => await Post.findByIdAndUpdate(id, optio
     runValidators: true
 })
 
-const PostRepository = { createPost, getPost, getPosts, updatePost }
+const deletePost = (id) => Post.findByIdAndDelete(id)
+
+const PostRepository = { createPost, getPost, getPosts, updatePost, deletePost }
 module.exports = PostRepository

@@ -78,5 +78,87 @@ const updatePost = async (
     return post
 }
 
-const PostService = { createPost, getPosts, getPost, checkIfPostOwner, checkIfPost, updatePost }
+const deletePost = async (ownerID, postID) => {
+    AuthUtil.validateID(postID)
+    await PostRepository.deletePost(postID)
+    await UserRepository.updateUser(ownerID, {
+        $inc: { postCount: -1 },
+    })
+}
+
+const likePost = async (id, dislikes, isLiked, userID) => {
+    const alreadyDisliked = dislikes?.includes(userID)
+    let post = await checkIfPost(id)
+
+    if (alreadyDisliked) {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $pull: { dislikes: userID },
+                isDisliked: false,
+            }
+        );
+    }
+
+    if (isLiked) {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $pull: { likes: userID },
+                isLiked: false
+            }
+        );
+    }
+
+    else {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $push: { likes: userID },
+                isLiked: true
+            }
+        );
+    }
+
+    return post;
+}
+
+const dislikePost = async (id, likes, isDisliked, userID) => {
+    let post = await checkIfPost(id)
+    const alreadyLiked = likes?.includes(userID)
+
+    if (alreadyLiked) {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $pull: { likes: userID },
+                isLiked: false
+
+            }
+        );
+    }
+
+    if (isDisliked) {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $pull: { dislikes: userID },
+                isDisliked: false
+            }
+        );
+    }
+
+    else {
+        post = await PostRepository.updatePost(
+            id,
+            {
+                $push: { dislikes: userID },
+                isDisliked: true
+            }
+        );
+    }
+    return post;
+}
+
+const PostService = { createPost, getPosts, getPost, checkIfPostOwner, checkIfPost, updatePost, deletePost, likePost, dislikePost }
 module.exports = PostService
