@@ -1,160 +1,99 @@
+const fs = require('fs')
+
 const expressAsyncHandler = require("express-async-handler");
 
 const UserService = require("../services/userService");
 
 const fetchAllUsers = expressAsyncHandler(async (req, res) => {
-    try {
-        const users = await UserService.getUsers();
-        res.status(200).json({ message: "success", users });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const users = await UserService.getUsers();
+    res.status(200).json({ message: "success", users });
 });
 
 const fetchcustomUser = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
-    try {
-        const user = await UserService.getUser(id);
-        res.status(200).json({ message: "success", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const user = await UserService.getUser(id);
+    res.status(200).json({ message: "success", user });
 });
 
 const fetchUserProfile = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
-    try {
-        const userProfile = await (await UserService.getUser(id)).populate("posts");
-        res.status(200).json({ message: "success", userProfile });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const userProfile = await (await UserService.getUser(id)).populate("posts");
+    res.status(200).json({ message: "success", userProfile });
 });
 
 const updateUserProfile = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     const { firstName, lastName, email, bio, profilePhoto } = req?.body;
-    try {
-        if (
-            req?.user?.firstName === firstName &&
-            req?.user?.lastName === lastName &&
-            req?.user?.email === email &&
-            req?.user?.bio === bio &&
-            req?.user?.profilePhoto === profilePhoto
-        ) {
-            throw new Error(
-                "nothing changed please update one of the required fields"
-            );
-        }
 
-        const user = await UserService.updateUserProfile(id, {
-            firstName,
-            lastName,
-            email,
-            bio,
-            profilePhoto,
-        });
-        res.status(200).json({ message: "sucess", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const user = await UserService.updateUserProfile(id, {
+        firstName,
+        lastName,
+        email,
+        bio,
+        profilePhoto,
+    });
+    res.status(200).json({ message: "sucess", user });
 });
 
 const updateUserPassword = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.params;
-        const newPassword = req?.body?.password;
-        let user = await UserService.getUser(id);
-        const userPassowrd = user.password;
-        user = await UserService.updatePassword(id, newPassword, userPassowrd);
-        res.status(200).json({ message: "sucess", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.params;
+    const newPassword = req?.body?.password;
+    let user = await UserService.getUser(id);
+    const userPassowrd = user.password;
+    user = await UserService.updatePassword(id, newPassword, userPassowrd);
+    res.status(200).json({ message: "sucess", user });
 });
 
 const deleteUser = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.params;
-        await UserService.deleteUser(id);
-        res.sendStatus(204);
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.params;
+    await UserService.deleteUser(id);
+    res.sendStatus(204);
 });
 
 const followUser = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.body;
-        const { followedUser, loginUser } = await UserService.followUser(
-            req?.user?.id,
-            id
-        );
-        res.status(200).json({ message: "sucess", loginUser, followedUser });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.body;
+    const { followedUser, loginUser } = await UserService.followUser(
+        req?.user?.id,
+        id
+    );
+    res.status(200).json({ message: "sucess", loginUser, followedUser });
 });
 
 const unfollowUser = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.body;
-        const { unfollowedUser, loginUser } = await UserService.unfollowUser(
-            req?.user?.id,
-            id
-        );
-        res.status(200).json({ message: "sucess", loginUser, unfollowedUser });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.body;
+    const { unfollowedUser, loginUser } = await UserService.unfollowUser(
+        req?.user?.id,
+        id
+    );
+    res.status(200).json({ message: "sucess", loginUser, unfollowedUser });
 });
 
 const blockUser = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await UserService.blockUser(id);
-        res.status(200).json({ message: "sucess", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.params;
+    const user = await UserService.blockUser(id);
+    res.status(200).json({ message: "sucess", user });
 });
 
 const unblockUser = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await UserService.unblockUser(id);
-        res.status(200).json({ message: "sucess", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const { id } = req.params;
+    const user = await UserService.unblockUser(id);
+    res.status(200).json({ message: "sucess", user });
 });
 
 const uploadProfilePhoto = expressAsyncHandler(async (req, res) => {
-    try {
-        const { id } = req?.user;
-        if (!req.file) {
-            throw new Error(
-                "you don’t upload a profile photo yet ,please upload one"
-            );
-        }
+    const { id } = req?.user;
+    if (!req.file) {
+        const error = new Error(
+            "you don’t upload a profile photo yet ,please upload one"
+        );
+        error.status = 400
+        throw error;
+    }
 
-        const localPath = `public/images/profile/${req?.file?.filename}`;
-        const user = await UserService.uploadProfilePhoto(id, localPath);
-        res.status(200).json({ message: "sucess", user });
-    }
-    catch (err) {
-        res.json({ message: err.message });
-    }
+    const localPath = `public/images/profile/${req?.file?.filename}`;
+    const user = await UserService.uploadProfilePhoto(id, localPath);
+    fs.unlinkSync(localPath)
+    res.status(200).json({ message: "sucess", user });
 });
 
 // const sendEmail = expressAsyncHandler(async (req, res) => {

@@ -21,6 +21,7 @@ const updateUserProfile = async (
     { firstName, lastName, email, bio, profilePhoto },
 ) => {
     AuthUtil.validateID(id)
+    await getUser(id)
 
     const user = await UserRepository.updateUser(id, {
         firstName,
@@ -34,15 +35,12 @@ const updateUserProfile = async (
 
 const updatePassword = async (id, newPassword, userPassword) => {
     AuthUtil.validateID(id)
-    const user = await UserRepository.getUserBYId(id)
+    await getUser(id)
 
-    if (!user) {
-        throw new Error('user not found')
-    }
-
-    else if (newPassword) {
+    if (newPassword) {
         if (await AuthUtil.comparePassword(newPassword, userPassword)) {
-            throw new Error(' your new password is the same as your old one')
+            const error = new Error('your new password is the same as your old one')
+            error.status = 400
         }
 
         const user = await UserRepository.updateUser(id, {
@@ -55,25 +53,18 @@ const updatePassword = async (id, newPassword, userPassword) => {
 
 const deleteUser = async (id) => {
     AuthUtil.validateID(id)
-    const isExistuser = await UserRepository.getUserBYId(id)
-
-    if (!isExistuser) {
-        throw new Error('user not found')
-    }
-
+    await getUser(id)
     await UserRepository.deleteUser(id)
 }
 
 const followUser = async (userID, userFollowedID) => {
     AuthUtil.validateID(userFollowedID)
-    const followedUser = await UserRepository.getUserBYId(userFollowedID)
+    const followedUser = await getUser(userFollowedID)
 
-    if (!followedUser) {
-        throw new Error(' the user that you are trying to follow is not found')
-    }
-
-    else if (followedUser.followers.includes(userID)) {
-        throw new Error('you are already following this user')
+    if (followedUser.followers.includes(userID)) {
+        const error = new Error('you are already following this user')
+        error.status = 409
+        throw error
     }
 
     else {
@@ -90,71 +81,47 @@ const followUser = async (userID, userFollowedID) => {
 
 const unfollowUser = async (userID, userUnfollowedID) => {
     AuthUtil.validateID(userUnfollowedID)
-    const followedUser = await UserRepository.getUserBYId(userUnfollowedID)
+    await getUser(userUnfollowedID)
 
-    if (!followedUser) {
-        throw new Error(' the user that you are trying to unfollow is not found')
-    }
+    const unfollowedUser = await UserRepository.updateUser(userUnfollowedID, {
+        $pull: { followers: userID },
+    })
 
-    else {
-        const unfollowedUser = await UserRepository.updateUser(userUnfollowedID, {
-            $pull: { followers: userID },
-        })
-
-        const loginUser = await UserRepository.updateUser(userID, {
-            $pull: { following: userUnfollowedID },
-        })
-        return { unfollowedUser, loginUser }
-    }
+    const loginUser = await UserRepository.updateUser(userID, {
+        $pull: { following: userUnfollowedID },
+    })
+    return { unfollowedUser, loginUser }
 }
 
 const blockUser = async (id) => {
     AuthUtil.validateID(id)
-    const isExistuser = await UserRepository.getUserBYId(id)
+    await getUser(id)
 
-    if (!isExistuser) {
-        throw new Error('user not found')
-    }
-
-    else {
-        const user = await UserRepository.updateUser(id, {
-            isBlocked: true,
-        })
-        return user
-    }
+    const user = await UserRepository.updateUser(id, {
+        isBlocked: true,
+    })
+    return user
 }
 
 const unblockUser = async (id) => {
     AuthUtil.validateID(id)
-    const isExistuser = await UserRepository.getUserBYId(id)
+    await getUser(id)
 
-    if (!isExistuser) {
-        throw new Error('user not found')
-    }
-
-    else {
-        const user = await UserRepository.updateUser(id, {
-            isBlocked: false,
-        })
-        return user
-    }
+    const user = await UserRepository.updateUser(id, {
+        isBlocked: false,
+    })
+    return user
 }
 
 const uploadProfilePhoto = async (id, localPath) => {
     const image = await cloudinaryUploadImg(localPath)
-    const isExistuser = await UserRepository.getUserBYId(id)
+    await getUser(id)
 
-    if (!isExistuser) {
-        throw new Error('user not found')
-    }
-    else {
-        const user = await UserRepository.updateUser(id, {
-            profilePhoto: image?.url,
-        })
-
-        fs.unlinkSync(localPath)
-        return user
-    }
+    const user = await UserRepository.updateUser(id, {
+        profilePhoto: image?.url,
+    })
+    // fs.unlinkSync(localPath)
+    return user
 }
 
 const UserService = {

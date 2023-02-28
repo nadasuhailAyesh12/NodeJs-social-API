@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const expressAsyncHandler = require('express-async-handler')
 
 const { secretKey } = require('../config/enviroment').jwt
-const User = require('../models/User')
+const User = require("../models/User")
 
 const authMiddleware = expressAsyncHandler(
     async (req, res, next) => {
@@ -20,13 +20,17 @@ const authMiddleware = expressAsyncHandler(
             }
 
             catch (error) {
-                throw new Error("Not authorized token expired, login again");
+                error = new Error("Not authorized token expired, login again");
+                error.status = 401
+                throw error
             }
         }
-        else {
-            throw new Error("There is no token attached to the header");
-        }
 
+        else {
+            const error = new Error("There is no token attached to the header");
+            error.status = 401
+            throw error
+        }
     })
 
 module.exports = authMiddleware

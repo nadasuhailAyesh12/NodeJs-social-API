@@ -8,7 +8,9 @@ const register = async ({ firstName, lastName, email, password }) => {
     const userExists = await userRepository.getUser({ email });
 
     if (userExists) {
-        throw new Error("User already exists");
+        const error = new Error("User already exists");
+        error.status = 409;
+        throw error;
     }
     const hashedPassword = await AuthUtil.hashPassword(password);
     const user = await UserRepository.createUser({
@@ -34,7 +36,9 @@ const login = async ({ email, password }) => {
         return { user, token };
     }
     else {
-        throw new Error("Invalid Login Credentials");
+        const error = new Error("Invalid Login Credentials");
+        error.status = 401;
+        throw error;
     }
 };
 
