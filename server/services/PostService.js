@@ -18,9 +18,11 @@ const createPost = async ({ title, description, category }, id, localPath) => {
 
     if (isProfane) {
         await UserService.blockUser(id)
-        throw new Error(
+        const error = new Error(
             "creating faild because post containes profane words and you have been blocked"
         );
+        error.status = 403;
+        throw error;
     }
 
     const uploadedImage = await cloudinaryUploadImg(localPath)
@@ -44,7 +46,9 @@ const checkIfPost = async (id) => {
     AuthUtil.validateID(id)
     const isExistPost = await PostRepository.getPost(id)
     if (!isExistPost) {
-        throw new Error('post not found')
+        const error = new Error('post not found')
+        error.status = 400
+        throw error
     }
 
     return isExistPost
@@ -61,9 +65,13 @@ const getPost = async (id) => {
 const getPosts = async () => await PostRepository.getPosts()
 
 const checkIfPostOwner = async (UserOwnerID, loginUserID) => {
-    if (UserOwnerID.toString() !== (loginUserID.toString()))
-        throw new Error(" unauthorized to modify this post ")
+    if ((UserOwnerID.toString()) !== loginUserID) {
+        const error = new Error(" unauthorized to modify this post ")
+        error.status = 403
+        throw error
+    }
 }
+
 const updatePost = async (
     id,
     { title, description, image, category }
@@ -79,7 +87,7 @@ const updatePost = async (
 }
 
 const deletePost = async (ownerID, postID) => {
-    AuthUtil.validateID(postID)
+    await checkIfPost(postID)
     await PostRepository.deletePost(postID)
     await UserRepository.updateUser(ownerID, {
         $inc: { postCount: -1 },

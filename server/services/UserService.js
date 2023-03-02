@@ -9,7 +9,9 @@ const getUser = async (id) => {
     const isExistuser = await UserRepository.getUserBYId(id)
 
     if (!isExistuser) {
-        throw new Error('user not found')
+        const error = new Error('user not found')
+        error.status = 400;
+        throw error
     }
     return isExistuser
 }
@@ -41,6 +43,7 @@ const updatePassword = async (id, newPassword, userPassword) => {
         if (await AuthUtil.comparePassword(newPassword, userPassword)) {
             const error = new Error('your new password is the same as your old one')
             error.status = 400
+            throw error
         }
 
         const user = await UserRepository.updateUser(id, {

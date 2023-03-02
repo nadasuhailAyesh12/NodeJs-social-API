@@ -9,10 +9,10 @@ const multerFilter = (req, file, cb) => {
     if (file.mimetype.startsWith("image")) {
         cb(null, true);
     } else {
+        const error = new Error("unsupported  file format")
+        error.status = 400
         cb(
-            {
-                message: "unsupported  file format",
-            },
+            error,
             false
         );
     }
