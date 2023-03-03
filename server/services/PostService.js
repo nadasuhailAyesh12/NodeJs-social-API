@@ -8,15 +8,21 @@ const PostRepository = require('../repositories/postRepository');
 const UserRepository = require('../repositories/userRepository');
 const AuthUtil = require('../utils/Auth');
 
-const createPost = async ({ title, description, category }, id, localPath) => {
 
-    const isProfane = new Filter().isProfane(
-        title,
+const uploadImage = async (localPath) => {
+    const uploadedImage = await cloudinaryUploadImg(localPath)
+    fs.unlinkSync(localPath)
+    return uploadedImage?.url
+}
+
+const createPost = async ({ title, description, category }, id) => {
+
+    const isProfaneDescription = new Filter().isProfane(
         description,
-
     );
+    const isProfaneTitle = title ? new Filter().isProfane(title) : false
 
-    if (isProfane) {
+    if (isProfaneDescription || isProfaneTitle) {
         await UserService.blockUser(id)
         const error = new Error(
             "creating faild because post containes profane words and you have been blocked"
@@ -25,20 +31,15 @@ const createPost = async ({ title, description, category }, id, localPath) => {
         throw error;
     }
 
-    const uploadedImage = await cloudinaryUploadImg(localPath)
-
     const post = await PostRepository.createPost({
         title,
         description,
-        image: uploadedImage?.url,
         category,
         user: id
     })
     await UserRepository.updateUser(id, {
         $inc: { postCount: 1 },
     })
-
-    fs.unlinkSync(localPath)
     return post
 }
 
@@ -168,5 +169,5 @@ const dislikePost = async (id, likes, isDisliked, userID) => {
     return post;
 }
 
-const PostService = { createPost, getPosts, getPost, checkIfPostOwner, checkIfPost, updatePost, deletePost, likePost, dislikePost }
+const PostService = { createPost, getPosts, getPost, checkIfPostOwner, checkIfPost, updatePost, deletePost, likePost, dislikePost, uploadImage }
 module.exports = PostService

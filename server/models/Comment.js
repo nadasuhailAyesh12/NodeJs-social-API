@@ -10,7 +10,7 @@ const commentSchema = new mongoose.Schema({
         required: [true, "User is required"]
     },
     description: {
-        type: string,
+        type: String,
         required: [true, "Description is required"]
     }
 }, { timestamps: true })

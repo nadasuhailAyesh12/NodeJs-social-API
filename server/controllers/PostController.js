@@ -5,23 +5,22 @@ const PostService = require("../services/PostService");
 const createPost = expressAsyncHandler(async (req, res) => {
     const { id } = req.user;
     const { title, description, category } = req.body;
-    if (!req.file) {
-        const error = new Error("you don’t upload a photo,please upload one");
-        error.status = 400;
-        throw error;
-    }
 
-    const localPath = `public/images/post/${req.file.filename}`;
-
-    const post = await PostService.createPost(
+    let post = await PostService.createPost(
         {
             title,
             description,
             category,
         },
-        id,
-        localPath
+        id
     );
+
+    if (req?.file) {
+        const localPath = `public/images/post/${req.file.filename}`;
+        const uploadedImage = await PostService.uploadImage(localPath)
+        post.image = uploadedImage
+        post = await post.save();
+    }
 
     res.status(201).json({
         message: "success",

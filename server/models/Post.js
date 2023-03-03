@@ -4,7 +4,8 @@ const postSchema = new mongoose.Schema(
     {
         title: {
             type: String,
-            required: [true, "Post title is required"],
+            default: 'Untitled',
+            required: true,
             trim: true,
         },
         description: {
