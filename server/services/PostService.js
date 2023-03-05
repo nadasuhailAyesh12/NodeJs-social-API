@@ -1,13 +1,9 @@
 const fs = require('fs');
 
-const Filter = require('bad-words');
-
-const UserService = require('./userService');
 const cloudinaryUploadImg = require('../utils/cloudinary');
 const PostRepository = require('../repositories/postRepository');
 const UserRepository = require('../repositories/userRepository');
 const AuthUtil = require('../utils/Auth');
-
 
 const uploadImage = async (localPath) => {
     const uploadedImage = await cloudinaryUploadImg(localPath)
@@ -16,21 +12,6 @@ const uploadImage = async (localPath) => {
 }
 
 const createPost = async ({ title, description, category }, id) => {
-
-    const isProfaneDescription = new Filter().isProfane(
-        description,
-    );
-    const isProfaneTitle = title ? new Filter().isProfane(title) : false
-
-    if (isProfaneDescription || isProfaneTitle) {
-        await UserService.blockUser(id)
-        const error = new Error(
-            "creating faild because post containes profane words and you have been blocked"
-        );
-        error.status = 403;
-        throw error;
-    }
-
     const post = await PostRepository.createPost({
         title,
         description,
